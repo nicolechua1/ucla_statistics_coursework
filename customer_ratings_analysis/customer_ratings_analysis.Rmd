@@ -1,0 +1,158 @@
+---
+title: "Customer Ratings Analysis"
+author: "Nicole Chua"
+date: "1/31/2022"
+output: 
+  pdf_document:
+    keep_tex: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+load("my_data.RData")
+library(ggpubr)
+library(rstatix)
+library(dplyr)
+library(knitr)
+library(gplots)
+```  
+
+\section{Introduction}  
+
+Our primary objective is to compare and rank the four types of businesses (BBQ, Burgers, Pizza, Sandwiches) from unpaid customer ratings. A customer provides ratings from 1-5 for every type of business and each set of business ratings by a customer is designated an elite or non-elite status. It is also possible that a customer contributes ratings as both an elite and non-elite. We are also interested in whether elite customers give higher ratings than non-elite customers.  
+
+
+```{r data summary, eval = FALSE}
+str(xMT_data_tall)
+dim(xMT_data_wide)
+```
+
+
+Using the tall/long version of data, there are 3 non-numeric fields, 1 numeric field and 262 observations.  
+
+\section{Methods} 
+
+Since each customer rates all food types but only some are designated both elite statuses, food types is a within factor and elite status is a between factor. Thus, we use a repeated measures one-way ANOVA to compare the means of ratings by food types and a separate one-way ANOVA for elite status to test the two following sets of hypotheses:  
+
+Hypotheses for the effect of food type:  
+
+*H~0~*:  There is no difference in mean customer rating for any food type.  
+
+*H~a~*: There is a difference in mean customer rating by food type.  
+
+Hypotheses for the effect of elite status:  
+
+*H~0~*:  There is no difference in mean customer rating for any elite status.  
+
+*H~a~*: There is a difference in mean customer rating by elite status.  
+
+\section{Results}  
+
+\subsection{Summary statistics}
+
+We start by computing the mean customer ratings of the four food types split by elite vs non-elite status and for each elite status as well in Table 1. 
+\newpage
+```{r}
+library(knitr)
+mean_table1 <- tapply(xMT_data_tall$rating, list(xMT_data_tall$food_type, xMT_data_tall$elite), mean)
+mean_table1 <- rbind(mean_table1, tapply(xMT_data_tall$rating, xMT_data_tall$elite, mean))
+rownames(mean_table1)[5] <- "Elite"
+mean_table1 |> kable()
+```  
+
+\begin{center}  
+Table 1: Mean customer ratings by food types and elite status  
+\end{center}  
+On average, the customers rated the food types in the order of Sandwiches being the highest, followed by Burgers, Pizza and then BBQ with the lowest average rating. Elite customers have a higher average rating than non-elite customers by 0.242 points. 
+
+
+```{r, eval = FALSE}
+xMT_data_tall %>%
+  group_by(food_type, elite) %>%
+  identify_outliers(rating)
+```
+
+
+```{r, fig.dim=c(7,3)}
+bxp1 <- ggboxplot(xMT_data_tall, x = "food_type", y = "rating", color = "elite", xlab = "food type")
+bxp1
+```  
+
+\begin{center}  
+Figure 1: Box plot of mean customer ratings by food type and elite status
+\end{center}  
+
+Figure 1 shows the distribution of customer ratings for each population of food types separated by elite status.  
+
+
+\subsection{ANOVA models}  
+
+```{r a1}
+# rm 1-way ANOVA for food_type factor
+a1 <- aov(rating ~ food_type + Error(ID), data = xMT_data_tall)
+# summary(a1)
+```
+
+
+```{r a1 table}
+anova_summary(a1) |> kable()
+```  
+\begin{center}  
+Table 2: Repeated measures one-way ANOVA for food type factor  
+\end{center}
+
+
+```{r a2}
+# 1-way ANOVA for elite factor
+a2 <- aov(rating ~ elite, data = xMT_data_tall)
+anova(a2) |> kable()
+```  
+\begin{center}  
+Table 3: One-way ANOVA for elite status factor  
+\end{center}
+```{r, eval=FALSE}
+# bonferroni post-hocs for food_type  
+
+pairwise.t.test(x = xMT_data_tall$rating, 
+                g = xMT_data_tall$food_type, 
+                paired = TRUE, 
+                p.adjust.method = 'bonferroni')
+```
+```{r, fig.dim=c(7,4)}
+plotmeans(rating ~ food_type, 
+          data = xMT_data_tall, 
+          xlab = "food type")
+```  
+\begin{center}  
+Figure 2: Plot of means and confidence intervals for food type ratings  
+\end{center}
+
+Table 2 shows the results of the repeated measures one-way ANOVA for food types. Differences among customer ratings for different food types are statistically significant (as indicated by the *) thus we reject the null hypothesis and conduct Bonferroni correction post-hocs for paired data. The results for pairwise comparisons of food types using paired t tests and Bonferroni correction is statistically significant for all comparisons. 
+
+Table 3 shows the results of the one-way ANOVA for elite or non-elite status. Differences among average elite and non-elite customer ratings are significant so we reject the null hypothesis.
+
+Figure 2 shows the mean customer rating for each food type. Sandwiches rank highest, followed by Burgers, Pizza and lastly, BBQ.
+
+\section{Conclusion}  
+
+The ranking of food types according to average customer ratings are as follows:  
+
+(highest)Sandwiches > Burgers > Pizza > BBQ(lowest)  
+
+From the repeated measures one-way ANOVA test as seen in Table 2 and Bonferroni correction test results, these differences in mean customer ratings for food types are statistically significant for all comparisons.  
+
+As for elite and non-elite customers, yes a customer with Elite = TRUE gives, on average, a higher rating than a customer with Elite = FALSE. From the one-way ANOVA for elite and non-elite status conducted in Table 3, elite customer ratings are 0.242 points higher than non-elite customer ratings and this difference is statistically significant.  
+
+
+
+
+
+
+
+
+
+
+
+
+
