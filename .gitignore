@@ -1,0 +1,5 @@
+# Ignore Mac system files
+.DS_store
+
+# Ignore additional file output from R knitting
+customer_ratings_analysis_files
