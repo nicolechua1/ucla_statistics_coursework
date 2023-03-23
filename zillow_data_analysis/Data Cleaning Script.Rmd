@@ -1,0 +1,344 @@
+---
+title: "Data Cleaning Script"
+output: pdf_document
+date: '2022-05-18'
+---
+
+```{r, message=FALSE}
+
+# load packages
+install.packages("tidyverse")
+library(tidyverse)
+
+# read data (insert your own path)
+census <- read.csv("C:/Users/Liya/Desktop/Year 4/Spring/STATS 141XP/Final Project/US_Census2018.csv")
+zillow <- read.csv("C:/Users/Liya/Desktop/Year 4/Spring/STATS 141XP/Final Project/ZILLOW_DATA_CA_22-02-2022-1.csv")
+
+```
+
+### Zillow Data Cleaning
+```{r, warning=FALSE}
+
+## fix column headers
+names(zillow) <- zillow[1,]
+zillow <- zillow[-1,]
+
+## convert data types
+zillow$Bedrooms <- as.numeric(zillow$Bedrooms)
+zillow$Bathrooms <- as.numeric(zillow$Bathrooms)
+zillow$`Living Area` <- as.numeric(zillow$`Living Area`)
+zillow$Fireplaces <- as.numeric(zillow$Fireplaces)
+zillow$`Parking Capacity` <- as.numeric(zillow$`Parking Capacity`)
+zillow$Price <- as.numeric(zillow$Price)
+zillow$`Days On Zillow` <- as.numeric(zillow$`Days On Zillow`)
+zillow$`View Count` <- as.numeric(zillow$`View Count`)
+zillow$`Favourite Count` <- as.numeric(zillow$`Favourite Count`)
+
+## remove row that is blank for all variables
+zillow <- zillow[-5902,]
+
+## impute NAs
+
+# by columns...get rid of any variables with more than 50% of their observations as NAs
+col1 <- c()
+col2 <- c()
+col3 <- c()
+col4 <- c()
+col5 <- c()
+col6 <- c()
+col7 <- c()
+col8 <- c()
+col9 <- c()
+col10 <- c()
+col11 <- c()
+col12 <- c()
+col13<- c()
+col14 <- c()
+col15 <- c()
+col16 <- c()
+col17 <- c()
+col18 <- c()
+col19 <- c()
+col20 <- c()
+col21 <- c()
+col22 <- c()
+col23 <- c()
+col24 <- c()
+col25 <- c()
+col26 <- c()
+col27 <- c()
+col28 <- c()
+col29 <- c()
+col30 <- c()
+col31 <- c()
+col32 <- c()
+col33 <- c()
+col34 <- c()
+col35 <- c()
+col36 <- c()
+col37 <- c()
+col38 <- c()
+col39 <- c()
+col40 <- c()
+col41 <- c()
+col42 <- c()
+col43 <- c()
+col44 <- c()
+
+# get all NAs from each column
+col1 <- which(is.na(zillow[1]))
+col2 <-  which(is.na(zillow[2]))
+col3 <-  which(is.na(zillow[3]))
+col4 <-  which(is.na(zillow[4]))
+col5 <-  which(is.na(zillow[5]))
+col6 <-  which(is.na(zillow[6]))
+col7 <-  which(is.na(zillow[7]))
+col8 <-  which(is.na(zillow[8]))
+col9 <-  which(is.na(zillow[9]))
+col10 <-  which(is.na(zillow[10]))
+col11 <-  which(is.na(zillow[11]))
+col12 <-  which(is.na(zillow[12]))
+col13<- which(is.na(zillow[13]))
+col14 <-  which(is.na(zillow[14]))
+col15 <-  which(is.na(zillow[15]))
+col16 <-  which(is.na(zillow[16]))
+col17 <-  which(is.na(zillow[17]))
+col18 <-  which(is.na(zillow[18]))
+col19 <-  which(is.na(zillow[19]))
+col20 <-  which(is.na(zillow[20]))
+col21 <-  which(is.na(zillow[21]))
+col22 <-  which(is.na(zillow[22]))
+col23 <-  which(is.na(zillow[23]))
+col24 <-  which(is.na(zillow[24]))
+col25 <-  which(is.na(zillow[25]))
+col26 <-  which(is.na(zillow[26]))
+col27 <-  which(is.na(zillow[27]))
+col28 <-  which(is.na(zillow[28]))
+col29 <-  which(is.na(zillow[29]))
+col30 <-  which(is.na(zillow[30]))
+col31 <-  which(is.na(zillow[31]))
+col32 <-  which(is.na(zillow[32]))
+col33 <-  which(is.na(zillow[33]))
+col34 <-  which(is.na(zillow[34]))
+col35 <-  which(is.na(zillow[35]))
+col36 <-  which(is.na(zillow[36]))
+col37 <-  which(is.na(zillow[37]))
+col38 <-  which(is.na(zillow[38]))
+col39 <-  which(is.na(zillow[39]))
+col40 <-  which(is.na(zillow[40]))
+col41 <-  which(is.na(zillow[41]))
+col42 <-  which(is.na(zillow[42]))
+col43 <-  which(is.na(zillow[43]))
+col44 <-  which(is.na(zillow[44]))
+
+# calculate proportion of NAs for each column
+p1 <- length(col1)/nrow(zillow)
+p2 <- length(col2)/nrow(zillow)
+p3 <- length(col3)/nrow(zillow)
+p4 <- length(col4)/nrow(zillow)
+p5 <- length(col5)/nrow(zillow)
+p6 <- length(col6)/nrow(zillow)
+p7 <- length(col7)/nrow(zillow)
+p8 <- length(col8)/nrow(zillow)
+p9 <- length(col9)/nrow(zillow)
+p10 <- length(col10)/nrow(zillow)
+p11 <- length(col11)/nrow(zillow)
+p12 <- length(col12)/nrow(zillow)
+p13 <- length(col13)/nrow(zillow)
+p14 <- length(col14)/nrow(zillow)
+p15 <- length(col15)/nrow(zillow)
+p16 <- length(col16)/nrow(zillow)
+p17 <- length(col17)/nrow(zillow)
+p18 <- length(col18)/nrow(zillow)
+p19 <- length(col19)/nrow(zillow)
+p20 <- length(col20)/nrow(zillow)
+p21 <- length(col21)/nrow(zillow)
+p22 <- length(col22)/nrow(zillow)
+p23 <- length(col23)/nrow(zillow)
+p24 <- length(col24)/nrow(zillow)
+p25 <- length(col25)/nrow(zillow)
+p26 <- length(col26)/nrow(zillow)
+p27 <- length(col27)/nrow(zillow)
+p28 <- length(col28)/nrow(zillow)
+p29 <- length(col29)/nrow(zillow)
+p30 <- length(col30)/nrow(zillow)
+p31 <- length(col31)/nrow(zillow)
+p32 <- length(col32)/nrow(zillow)
+p33 <- length(col33)/nrow(zillow)
+p34 <- length(col34)/nrow(zillow)
+p35 <- length(col35)/nrow(zillow)
+p36 <- length(col36)/nrow(zillow)
+p37 <- length(col37)/nrow(zillow)
+p38 <- length(col38)/nrow(zillow)
+p39 <- length(col39)/nrow(zillow)
+p40 <- length(col40)/nrow(zillow)
+p41 <- length(col41)/nrow(zillow)
+p42 <- length(col42)/nrow(zillow)
+p43 <- length(col43)/nrow(zillow)
+p44 <- length(col44)/nrow(zillow)
+
+# see which columns to omit 
+NA_prop <- c(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20,p21,p22,p23,p24,p25,p26,p27,p28,p29,p30,p31,p32,p33,p34,p35,p36,p37,p38,p39,p40,p41,p42,p43,p44)
+which(NA_prop > 0.5)
+
+# omit columns 19, 22, 37, 43
+zillow <- zillow[c(-19,-22,-37,-43)]
+
+# by rows... omit rows with NAs in i
+zillow <- na.omit(zillow)
+
+```
+
+### Census Data Cleaning
+```{r, warning=FALSE}
+
+## fix and rename column headers
+
+# columns with 2 blank rows
+census1 <- census[,1:13]
+census1 <- census1[-c(1,2,3),]
+
+census1 <- rename(census1, c(`Zip Code`=`ï..Zip..ZCTA.`, `GEO ID`=GEOID, `Median Household Income in 2018`=`Median.household.income.in.the.past.12.months..in.2018.inflation.adjusted.dollars.`, `Median Household Income in 2018 - MoE`=Margin.of.Error, `Mean Income in 2018`=Mean.income..in.2018.inflation.adjusted.dollars., `Mean Income in 2018 - MoE`=Margin.of.Error.1, `Per Capita Income in 2018`=Per.capita.income.in.the.past.12.months..in.2018.Inflation.adjusted.dollars., `Per Capita Income in 2018 - MoE`=Margin.of.Error.2,`Percent of Households with Incomes $200,000 or more`=Percent.of.Households.with.incomes..200.000.or.more, `Percent of Households with Incomes $200,000 or more - MoE`=Margin.of.Error.3))
+
+# columns with 4 rows of headers
+census2 <- census[,14:38]
+census2 <- census2[-c(1,2),]
+names(census2) <- census2[1,]
+census2 <- census2[-1,]
+
+names(census2)[2] = "Median Income of Householder under 25 years - MoE"
+names(census2)[4] = "Median Income of Householder 25 to 44 years - MoE"
+names(census2)[6] = "Median Income of Householder 45 to 64 years - MoE"
+names(census2)[8]="Median Income of Householder 65 years and over - MoE"
+
+census2 <- rename(census2, c(`Median Income of Householder under 25 years`=`Householder under 25 years`,`Median Income of Householder 25 to 44 years`=`Householder 25 to 44 years`,`Median Income of Householder 45 to 64 years`=`Householder 45 to 64 years`, `Median Income of Householder 65 years and over`=`Householder 65 years and over`, `Number of Households`=Households, `Household income in 2018 less than $24,999`=`Less than $24,999`, `Household income in 2018 $25,000 to $49,999`=`$25,000 to $49,999`, `Household income in 2018 $50,000 to $74,999`=`$50,000 to $74,999`, `Household income in 2018 $75,000 to $99,999`=`$75,000 to $99,999`, `Household income in 2018 $100,000 to $149,999`=`$100,000 to $149,999`, `Household income in 2018 $150,000 to $199,999`=`$150,000 to $199,999`, `Household income in 2018 $200,000 or more`=`$200,000 or more`, `Two or More Races`=Two))
+  
+# columns with 3 blank rows
+census3 <- census[,39]
+census3 <- census3[-c(1,2,3)]
+census3 <- data.frame(census3)[[1]]
+
+# columns with 3 rows of headers
+census4 <- census[,40]
+census4 <- census4[-c(1,2,3)]
+census4 <- data.frame(census4)[[1]]
+
+# columns with 4 rows of headers
+census5 <- census[,c(41:56)]
+census5 <- census5[-c(1,2),]
+names(census5) <- census5[1,]
+census5 <- census5[-1,]
+
+names(census5)[1] = "0 to 9 years - female"
+names(census5)[2] = "10 to 19 years - female"
+names(census5)[3] = "20 to 29 years - female"
+names(census5)[4] = "30 to 39 years - female"
+names(census5)[5] = "40 to 49 years - female"
+names(census5)[6] = "50 to 59 years - female"
+names(census5)[7] = "60 to 69 years - female"
+names(census5)[8] = "70+ years - female"
+names(census5)[9] = "0 to 9 years - male"
+names(census5)[10] ="10 to 19 years - male"
+names(census5)[11] = "20 to 29 years - male"
+names(census5)[12] = "30 to 39 years - male"
+names(census5)[13] = "40 to 49 years - male"
+names(census5)[14] = "50 to 59 years - male"
+names(census5)[15] = "60 to 69 years - male"
+names(census5)[16] = "70+ years - male"
+
+# columns with 3 blank rows
+census6 <- census[,57]
+census6 <- census6[-c(1,2,3)]
+census6 <- data.frame(census6)[[1]]
+
+# columns with 4 rows of headers
+census7 <- census[,c(58:67)]
+census7 <- census7[-c(1,2),]
+names(census7) <- census7[1,]
+census7 <- census7[-1,]
+
+names(census7)[7] <- "Number of Family Households"
+
+# columns with 3 blank rows
+census8 <- census[,c(68,69)]
+census8 <- census8[-c(1,2,3),]
+
+names(census8)[1] <- "Housing Units"
+names(census8)[2] <- "Median Value of Owner-Occupied Units"
+
+# columns with 2 rows of headers and 2 blank rows
+census9 <- census[,70]
+# names(census9) <- census9[1,]
+census9 <- census9[-c(1,2,3)]
+census9 <- data.frame(census9)[[1]]
+
+# columns with 3 rows of headers and 1 blank row
+census10 <- census[,71]
+census10 <- census10[-c(1,2,3)]
+census10 <- data.frame(census10)[[1]]
+
+# columns with 4 rows of headers
+census11 <- census[,c(72:75)]
+census11 <- census11[-c(1,2),]
+names(census11) <- census11[1,]
+census11 <- census11[-1,]
+
+names(census11)[1] <- "Married couple families sharing a housing unit"
+names(census11)[2] <- "Married couple families with own children sharing a housing unit"
+names(census11)[3] <- "Single parent families sharing a housing unit"
+names(census11)[4] <- "Single parent families with own children sharing a housing unit"
+
+# columns with 2 rows of headers and 2 blank rows
+census12 <- census[,76]
+# names(census12) <- census12[1,]
+census12 <- census12[-c(1,2,3)]
+census12 <- data.frame(census12)[[1]]
+
+# put data set back together
+census_clean <- cbind(census1,census2,census3,census4,census5,census6,census7,census8,census9,census10,census11,census12)
+
+# finish renaming columns
+census_clean <- rename(census_clean, c(`Population Density (square miles)`=census3, `Total Population`=census4, `Median Age`=census6, `Households sharing a housing unit`=census9, `Families sharing a housing unit`=census10, `Non-families sharing a housing unit`=census12))
+
+
+## convert data types
+census_clean <- data.frame(census_clean)
+
+# remove dollar signs and commas and convert percentages to decimal form
+census_clean[]<-lapply(census_clean,gsub,pattern="$",fixed=TRUE,replacement="")
+census_clean[]<-lapply(census_clean,gsub,pattern=",",fixed=TRUE,replacement="")
+census_clean$Percent.of.Households.with.Incomes..200.000.or.more <- as.numeric(sub("%", "",census_clean$Percent.of.Households.with.Incomes..200.000.or.more,fixed=TRUE))/100
+census_clean$Percent.of.Households.with.Incomes..200.000.or.more...MoE <- as.numeric(sub("%", "",census_clean$Percent.of.Households.with.Incomes..200.000.or.more...MoE,fixed=TRUE))/100
+census_clean$Percent.of.Households.with.Incomes..200.000.or.more...MoE <- str_trim(census_clean$Percent.of.Households.with.Incomes..200.000.or.more...MoE)
+census_clean$No.Diploma.... <- as.numeric(sub("%", "",census_clean$No.Diploma....,fixed=TRUE))/100
+census_clean$High.School.... <- as.numeric(sub("%", "",census_clean$High.School....,fixed=TRUE))/100
+census_clean$Some.College.... <- as.numeric(sub("%", "",census_clean$Some.College....,fixed=TRUE))/100
+census_clean$Bachelors.Degree.... <- as.numeric(sub("%", "",census_clean$Bachelors.Degree....,fixed=TRUE))/100
+census_clean$Graduate.Degree.... <- as.numeric(sub("%", "",census_clean$Graduate.Degree....,fixed=TRUE))/100
+census_clean$Unemployment.Rate.... <- as.numeric(sub("%", "",census_clean$Unemployment.Rate....,fixed=TRUE))/100
+census_clean$Family.Poverty.... <- as.numeric(sub("%", "",census_clean$Family.Poverty....,fixed=TRUE))/100
+
+# convert to numeric
+census_clean[6:76] = lapply(census_clean[6:76], FUN = function(y){as.numeric(y)})
+
+## filter out non-LA zip codes
+census_clean <- filter(census_clean, County=="Los Angeles")
+
+```
+
+### Final Step: Narrow Down Zip Codes for Both Datasets (middle class incomes only)
+```{r, warning=FALSE}
+
+zillow_clean <- filter(zillow, Zipcode==91505 | Zipcode==91406 | Zipcode==91331 | Zipcode==90045 | Zipcode==90291)
+
+census_clean <- filter(census_clean, Zip.Code==91505 | Zip.Code==91406 | Zip.Code==91331 | Zip.Code==90045 | Zip.Code==90291)
+
+```
+
+### Write to CSV
+```{r}
+
+write.csv(zillow_clean,"C:/Users/Liya/Desktop/Year 4/Spring/STATS 141XP/Final Project/zillow_clean.csv", row.names = FALSE)
+write.csv(census_clean,"C:/Users/Liya/Desktop/Year 4/Spring/STATS 141XP/Final Project/census_clean.csv", row.names = FALSE)
+
+```

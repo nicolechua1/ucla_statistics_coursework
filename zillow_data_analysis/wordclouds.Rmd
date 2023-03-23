@@ -1,0 +1,159 @@
+---
+title: "stats141xp_project"
+author: "Nicole Lam"
+date: "5/10/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("wordcloud")
+library("tm")
+```
+
+```{r}
+library("readxl")
+zillow <- read_excel("ZILLOW_DATA_CA_22-02-2022-1.xlsx")
+head(zillow)
+
+# make subheaders headers
+names(zillow) <- zillow[1, ]
+zillow1 <- zillow[-1, ]
+head(zillow1, 30)
+
+zipcodes <- unique(zillow1$Zipcode) 
+numberOfzipcodes <- length(zipcodes)
+
+# number of zipcodes 
+numberOfzipcodes
+
+# zipcodes 
+zipcodes
+
+
+any(zipcodes == "91406")
+# 91505 (Burbank), 91406 (Lake Balboa), 91331 (Arleta), 90045 (Del Aire), 90291 (Venice)
+# 90077, 90272, 91436, 90094, 90402 - top earners 
+# 90003, 90011, 90037, 90002, 90044 - lowest earners 
+# observations - has the words for, with, and, the, this, that
+```
+
+```{r}
+# Single Family
+zillow2 <- zillow1[zillow1$'Property Type' == "SINGLE_FAMILY", ]
+
+burbank <- zillow2[zillow2$Zipcode == "91505",]
+balboa <- zillow2[zillow2$Zipcode == "91406",]
+arleta <- zillow2[zillow2$Zipcode == "91331",]
+aire <- zillow2[zillow2$Zipcode == "90045",]
+venice <- zillow2[zillow2$Zipcode == "902915",]
+
+
+#Create a vector containing only the text
+burbank_text <- burbank[, "Description"]
+balboa_text <- balboa[, "Description"]
+arleta_text <- arleta[, "Description"]
+aire_text <- aire[, "Description"]
+venice_text <- venice[, "Description"]
+
+text <- c(burbank_text, balboa_text, arleta_text,
+          aire_text, venice_text)
+
+vdocs <- VCorpus(VectorSource(text))
+vdocs <- tm_map(vdocs, content_transformer(tolower))      # to lowercase
+vdocs <- tm_map(vdocs, removeWords, stopwords("english")) # remove stopwords
+
+tdm <- TermDocumentMatrix(vdocs)
+
+tdm.matrix <- as.matrix(tdm)
+tdm.rs <- sort(rowSums(tdm.matrix), decreasing=TRUE)
+tdm.df <- data.frame(word = names(tdm.rs), freq = tdm.rs, stringsAsFactors = FALSE)
+
+set.seed(1234)
+dev.new(width = 1000, height = 1000, unit = "px")
+wordcloud(words = tdm.df$word, freq = tdm.df$freq, min.freq = 20,
+          max.words=25, random.order=FALSE, rot.per=0.35,
+          colors=brewer.pal(8, "Dark2"))
+```
+
+```{r}
+# Townhouse
+zillow2 <- zillow1[zillow1$'Property Type' == "TOWNHOUSE", ]
+
+burbank <- zillow2[zillow2$Zipcode == "91505",]
+balboa <- zillow2[zillow2$Zipcode == "91406",]
+arleta <- zillow2[zillow2$Zipcode == "91331",]
+aire <- zillow2[zillow2$Zipcode == "90045",]
+venice <- zillow2[zillow2$Zipcode == "902915",]
+
+
+#Create a vector containing only the text
+burbank_text <- burbank[, "Description"]
+balboa_text <- balboa[, "Description"]
+arleta_text <- arleta[, "Description"]
+aire_text <- aire[, "Description"]
+venice_text <- venice[, "Description"]
+
+text <- c(burbank_text, balboa_text, arleta_text,
+          aire_text, venice_text)
+
+vdocs <- VCorpus(VectorSource(text))
+vdocs <- tm_map(vdocs, content_transformer(tolower))      # to lowercase
+vdocs <- tm_map(vdocs, removeWords, stopwords("english")) # remove stopwords
+
+tdm <- TermDocumentMatrix(vdocs)
+
+tdm.matrix <- as.matrix(tdm)
+tdm.rs <- sort(rowSums(tdm.matrix), decreasing=TRUE)
+tdm.df <- data.frame(word = names(tdm.rs), freq = tdm.rs, stringsAsFactors = FALSE)
+
+set.seed(1234)
+dev.new(width = 1000, height = 1000, unit = "px")
+wordcloud(words = tdm.df$word, freq = tdm.df$freq, min.freq = 20,
+          max.words=200, random.order=FALSE, rot.per=0.35,
+          colors=brewer.pal(8, "Dark2"))
+
+```
+
+
+```{r}
+# removed stopwords - multifamily
+zillow2 <- zillow1[zillow1$'Property Type' == "MULTI_FAMILY", ]
+# All the zipcodes 
+burbank <- zillow2[zillow2$Zipcode == "91505",]
+balboa <- zillow2[zillow2$Zipcode == "91406",]
+arleta <- zillow2[zillow2$Zipcode == "91331",]
+aire <- zillow2[zillow2$Zipcode == "90045",]
+venice <- zillow2[zillow2$Zipcode == "902915",]
+
+#Create a vector containing only the text
+burbank_text <- burbank[, "Description"]
+balboa_text <- balboa[, "Description"]
+arleta_text <- arleta[, "Description"]
+aire_text <- aire[, "Description"]
+venice_text <- venice[, "Description"]
+
+text <- c(burbank_text, balboa_text, arleta_text,
+          aire_text, venice_text)
+
+vdocs <- VCorpus(VectorSource(text))
+vdocs <- tm_map(vdocs, content_transformer(tolower))      # to lowercase
+vdocs <- tm_map(vdocs, removeWords, stopwords("english")) # remove stopwords
+
+tdm <- TermDocumentMatrix(vdocs)
+
+tdm.matrix <- as.matrix(tdm)
+tdm.rs <- sort(rowSums(tdm.matrix), decreasing=TRUE)
+tdm.df <- data.frame(word = names(tdm.rs), freq = tdm.rs, stringsAsFactors = FALSE)
+
+set.seed(1234)
+dev.new(width = 1000, height = 1000, unit = "px")
+wordcloud(words = tdm.df$word, freq = tdm.df$freq, min.freq = 18,
+          max.words=200, random.order=FALSE, rot.per=0.25,
+          colors=brewer.pal(8, "Dark2"))
+
+```
+
+

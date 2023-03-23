@@ -1,0 +1,440 @@
+---
+title: "eda"
+author: "Nicole Chua"
+date: "5/17/2022"
+output: pdf_document
+---
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+library(readxl)
+library(tidytext)
+library(stopwords)
+library(forcats)
+library(knitr)
+library(igraph)
+library(ggraph)
+library(ggplot2)
+library(lattice)
+```  
+
+```{r}
+# Load in data and clean the data"
+census <- read_xlsx("US_Census2018.xlsx")
+zillow <- read_xlsx("ZILLOW_DATA_CA_22-02-2022-1.xlsx")
+dim(zillow)
+names(zillow) <- zillow[1, ]
+zillow <- zillow[-1, ]  
+# clean row that is blank for everything"
+zillow <- zillow[-5902,]
+# clean rows that are blank for time on zillow 
+zillow[c(15754, 21691), ]
+zillow <- zillow[-c(15754, 21691), ]
+```  
+
+```{r}
+# plot distribution of days on zillow  
+zillow$`Days On Zillow` <- as.numeric(zillow$`Days On Zillow`)
+summary(zillow$`Days On Zillow`)
+ggplot(zillow, aes(x = `Days On Zillow`)) + geom_histogram(fill = "cornflowerblue")
+
+```
+
+
+```{r}
+# place listing into days on zillow bins based on median
+zillow <- zillow %>%
+  mutate(copywrite = case_when(`Days On Zillow` <= summary(zillow$`Days On Zillow`)[2] ~ 'very effective',
+                           `Days On Zillow` <= summary(zillow$`Days On Zillow`)[3] ~ 'effective',
+                           `Days On Zillow` <= summary(zillow$`Days On Zillow`)[5] ~ 'less effective', 
+                           `Days On Zillow` <= summary(zillow$`Days On Zillow`)[6] ~ 'not effective'))
+
+# subset zillow to deal with smaller dataset  
+zillow1 <- zillow %>% 
+  select(`Property Status`, `Property Type`, Description, `Days On Zillow`, copywrite)
+
+# insert removal of stopwords here
+```  
+
+## Term Frequency in description by copywrite efficacy
+
+```{r}
+desc_words <- zillow1 %>% 
+  unnest_tokens(word, Description) %>% 
+  count(copywrite, word, sort = T)  
+
+total_words <- desc_words %>% 
+  group_by(copywrite) %>% 
+  summarise(total = sum(n))
+
+desc_words <- left_join(desc_words, total_words)
+desc_words
+```
+
+
+```{r}
+# plot Term Frequency
+ggplot(desc_words, aes(n/total, fill = copywrite)) +
+  geom_histogram(show.legend = FALSE, fill = "cornflowerblue") +
+  xlim(NA, 0.00009) +
+  facet_wrap(~copywrite, scales = "free_y")
+```  
+
+The above plot has very long tails to the right, indicating that there are many words that rarely appear in the description but very few words that frequently occur in the description. We are interested in knowing what are the few words that frequently occur in the descriptions of each copywrite group.  
+
+```{r}
+freq_by_rank <- desc_words %>% 
+  group_by(copywrite) %>% 
+  mutate(rank = row_number(), 
+         `term frequency` = n/total) %>%
+  ungroup()
+
+freq_by_rank[which(freq_by_rank$rank <= 10),]
+```  
+
+## tf-idf  
+
+Using tf-idf to find the important words for the content of each description  
+```{r}
+desc_tf_idf <- desc_words %>%
+  bind_tf_idf(word, copywrite, n)
+
+desc_tf_idf
+```  
+
+idf and thus tf-idf are zero for these extremely common words that appear in all copywrite groups, so the idf term (which will then be the natural log of 1) is zero. The inverse document frequency will be a higher number for words that occur in fewer of the copywrites in the different groups.  
+
+```{r}
+desc_tf_idf %>%
+  select(-total) %>%
+  arrange(desc(tf_idf))
+```  
+
+```{r}
+# visualize tf_idf  
+
+desc_tf_idf %>%
+  group_by(copywrite) %>%
+  slice_max(tf_idf, n = 15) %>%
+  ungroup() %>%
+  ggplot(aes(tf_idf, fct_reorder(word, tf_idf), fill = copywrite)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~copywrite, scales = "free") +
+  labs(x = "tf-idf", y = NULL)
+```  
+
+## Term Frequency in description by housing type
+
+```{r}
+desc_words2 <- zillow %>% 
+  unnest_tokens(word, Description) %>% 
+  count(`Property Type`, word, sort = T)  
+
+total_words2 <- desc_words2 %>% 
+  group_by(`Property Type`) %>% 
+  summarise(total = sum(n))
+
+desc_words2 <- left_join(desc_words2, total_words2)
+desc_words2
+```
+
+
+```{r}
+# plot Term Frequency
+ggplot(desc_words2, aes(n/total, fill = `Property Type`)) +
+  geom_histogram(show.legend = FALSE, fill = "cornflowerblue") +
+  xlim(NA, 0.00009) +
+  facet_wrap(~`Property Type`, ncol = 2, scales = "free_y")
+```  
+
+The above plot has very long tails to the right, indicating that there are many words that rarely appear in the description but very few words that frequently occur in the description. We are interested in knowing what are the few words that frequently occur in the descriptions of each housing type.  
+
+```{r}
+freq_by_rank2 <- desc_words2 %>% 
+  group_by(`Property Type`) %>% 
+  mutate(rank = row_number(), 
+         `term frequency` = n/total) %>%
+  ungroup()
+
+freq_by_rank2[which(freq_by_rank$rank <= 10),]
+```  
+
+## tf-idf  
+
+Using tf-idf to find the important words for the content of each description  
+```{r}
+# remove home type unknown  
+#desc_words2 <- desc_words2[desc_words2$`Property Type` != "HOME_TYPE_UNKNOWN",]
+
+desc_tf_idf2 <- desc_words2 %>%
+  bind_tf_idf(word, `Property Type`, n)
+
+desc_tf_idf2
+```  
+
+idf and thus tf-idf are zero for these extremely common words that appear in all copywrite groups, so the idf term (which will then be the natural log of 1) is zero. The inverse document frequency will be a higher number for words that occur in fewer of the copywrites in the different groups.  
+
+```{r}
+desc_tf_idf2 %>%
+  select(-total) %>%
+  arrange(desc(tf_idf))
+```  
+
+```{r}
+# visualize tf_idf  
+
+desc_tf_idf2 %>%
+  group_by(`Property Type`) %>%
+  slice_max(tf_idf, n = 15) %>%
+  ungroup() %>%
+  ggplot(aes(tf_idf, fct_reorder(word, tf_idf), fill = `Property Type`)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~`Property Type`, scales = "free") +
+  labs(x = "tf-idf", y = NULL)
+```  
+
+## tf-idf with new cleaned datatset  
+
+```{r}
+census_clean <- read.csv("census_clean.csv", header = T)  
+zillow_clean <- read.csv("zillow_clean.csv", header = T)  
+
+
+```  
+
+## Term Frequency in description by housing type for new dataset
+
+```{r}
+desc_words3 <- zillow_clean %>% 
+  unnest_tokens(word, Description) %>% 
+  count(`Property.Type`, word, sort = T) |> 
+  dplyr::anti_join(tidytext::get_stopwords())
+
+
+total_words3 <- desc_words3 %>% 
+  group_by(`Property.Type`) %>% 
+  summarise(total = sum(n))
+
+desc_words3 <- left_join(desc_words3, total_words3)
+desc_words3
+```  
+
+```{r}
+# plot Term Frequency
+ggplot(desc_words3, aes(n/total, fill = `Property.Type`)) +
+  geom_histogram(show.legend = FALSE, fill = "cornflowerblue") +
+  xlim(NA, 0.00009) +
+  facet_wrap(~`Property.Type`, ncol = 2, scales = "free_y")
+```  
+
+The above plot has very long tails to the right, indicating that there are many words that rarely appear in the description but very few words that frequently occur in the description. We are interested in knowing what are the few words that frequently occur in the descriptions of each housing type.  
+
+```{r}
+freq_by_rank3 <- desc_words3 %>% 
+  group_by(`Property.Type`) %>% 
+  mutate(rank = row_number(), 
+         `term frequency` = n/total) %>%
+  ungroup()
+
+freq_by_rank3[which(freq_by_rank3$rank <= 10),]
+```   
+
+
+## tf-idf  
+
+Using tf-idf to find the important words for the content of each description  
+```{r}
+# remove home type unknown  
+#desc_words3 <- desc_words3[desc_words3$`Property.Type` != "HOME_TYPE_UNKNOWN",]
+
+desc_tf_idf3 <- desc_words3 %>%
+  bind_tf_idf(word, `Property.Type`, n)
+
+desc_tf_idf3
+```  
+
+idf and thus tf-idf are zero for these extremely common words that appear in all copywrite groups, so the idf term (which will then be the natural log of 1) is zero. The inverse document frequency will be a higher number for words that occur in fewer of the copywrites in the different groups.  
+
+```{r}
+desc_tf_idf3 %>%
+  select(-total) %>%
+  arrange(desc(tf_idf))
+```  
+
+```{r}
+# visualize tf_idf  
+
+desc_tf_idf3 %>%
+  group_by(`Property.Type`) %>%
+  slice_max(tf_idf, n = 15) %>%
+  ungroup() %>%
+  ggplot(aes(tf_idf, fct_reorder(word, tf_idf), fill = `Property.Type`)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~`Property.Type`, scales = "free") +
+  labs(x = "tf-idf", y = NULL)
+```   
+
+
+
+
+
+
+
+# UDPipe  
+
+```{r}
+library(udpipe) 
+ud_model <- udpipe_download_model(language = "english-ewt")
+ud_model <- udpipe_load_model(ud_model$file_model)
+x <- udpipe_annotate(ud_model, x = zillow_clean$Description, doc_id = zillow_clean$Property.Type)
+x <- as.data.frame(x)
+```  
+
+```{r}  
+# Single family
+x1 <- x[x$doc_id == "SINGLE_FAMILY",]
+stats <- subset(x1, upos %in% c("NOUN")) 
+stats <- txt_freq(stats$token)
+stats$key <- factor(stats$key, levels = rev(stats$key)) 
+barchart(key ~ freq, data = head(stats, 20), col = "cadetblue", 
+         main = "Most occurring nouns for SINGLE_FAMILY", xlab = "Freq")     
+
+# Apartment  
+
+x2 <- x[x$doc_id == "APARTMENT",]
+stats <- subset(x2, upos %in% c("NOUN")) 
+stats <- txt_freq(stats$token)
+stats$key <- factor(stats$key, levels = rev(stats$key)) 
+barchart(key ~ freq, data = head(stats, 20), col = "cadetblue", 
+         main = "Most occurring nouns for APARTMENT", xlab = "Freq") 
+
+# Multi family  
+
+x3 <- x[x$doc_id == "MULTI_FAMILY",]  
+
+# Condo 
+
+x4 <- x[x$doc_id == "CONDO",]    
+
+# Townhouse
+
+x5 <- x[x$doc_id == "TOWNHOUSE",]  
+```  
+
+```{r}
+stats <- keywords_rake(x = x1, term = "lemma", group = "doc_id", 
+                       relevant = x1$upos %in% c("NOUN", "ADJ"))
+stats$key <- factor(stats$keyword, levels = rev(stats$keyword))
+barchart(key ~ rake, data = head(subset(stats, freq > 3), 20), col = "cadetblue", 
+         main = "Keywords identified by RAKE for SINGLE_FAMILY", 
+         xlab = "Rake")  
+# Apartment
+stats <- keywords_rake(x = x2, term = "lemma", group = "doc_id", 
+                       relevant = x2$upos %in% c("NOUN", "ADJ"))
+stats$key <- factor(stats$keyword, levels = rev(stats$keyword))
+barchart(key ~ rake, data = head(subset(stats, freq > 3), 20), col = "cadetblue", 
+         main = "Keywords identified by RAKE for APARTMENT", 
+         xlab = "Rake")  
+
+# Mutli family  
+stats <- keywords_rake(x = x3, term = "lemma", group = "doc_id", 
+                       relevant = x3$upos %in% c("NOUN", "ADJ"))
+stats$key <- factor(stats$keyword, levels = rev(stats$keyword))
+barchart(key ~ rake, data = head(subset(stats, freq > 3), 20), col = "cadetblue", 
+         main = "Keywords identified by RAKE for MULTI_FAMILY", 
+         xlab = "Rake")  
+# Condo  
+stats <- keywords_rake(x = x4, term = "lemma", group = "doc_id", 
+                       relevant = x4$upos %in% c("NOUN", "ADJ"))
+stats$key <- factor(stats$keyword, levels = rev(stats$keyword))
+barchart(key ~ rake, data = head(subset(stats, freq > 3), 20), col = "cadetblue", 
+         main = "Keywords identified by RAKE for CONDO", 
+         xlab = "Rake")  
+
+# Townhouse  
+stats <- keywords_rake(x = x5, term = "lemma", group = "doc_id", 
+                       relevant = x5$upos %in% c("NOUN", "ADJ"))
+stats$key <- factor(stats$keyword, levels = rev(stats$keyword))
+barchart(key ~ rake, data = head(subset(stats, freq > 3), 20), col = "cadetblue", 
+         main = "Keywords identified by RAKE for TOWNHOUSE", 
+         xlab = "Rake")  
+```  
+
+```{r}
+cooc <- cooccurrence(x = subset(x1, upos %in% c("NOUN", "ADJ")), 
+                     term = "lemma", 
+                     group = c("doc_id", "paragraph_id", "sentence_id"))
+wordnetwork <- head(cooc, 30)
+wordnetwork <- graph_from_data_frame(wordnetwork)
+ggraph(wordnetwork, layout = "fr") +
+  geom_edge_link(aes(width = cooc, edge_alpha = cooc), edge_colour = "pink") +
+  geom_node_text(aes(label = name), col = "darkgreen", size = 4) +
+  theme_graph(base_family = "Arial Narrow") +
+  theme(legend.position = "none") +
+  labs(title = "Cooccurrences within sentence for SINGLE_FAMILY", subtitle = "Nouns & Adjective")  
+
+cooc <- cooccurrence(x = subset(x2, upos %in% c("NOUN", "ADJ")), 
+                     term = "lemma", 
+                     group = c("doc_id", "paragraph_id", "sentence_id"))
+wordnetwork <- head(cooc, 30)
+wordnetwork <- graph_from_data_frame(wordnetwork)
+ggraph(wordnetwork, layout = "fr") +
+  geom_edge_link(aes(width = cooc, edge_alpha = cooc), edge_colour = "pink") +
+  geom_node_text(aes(label = name), col = "darkgreen", size = 4) +
+  theme_graph(base_family = "Arial Narrow") +
+  theme(legend.position = "none") +
+  labs(title = "Cooccurrences within sentence for APARTMENT", subtitle = "Nouns & Adjective")  
+
+cooc <- cooccurrence(x = subset(x3, upos %in% c("NOUN", "ADJ")), 
+                     term = "lemma", 
+                     group = c("doc_id", "paragraph_id", "sentence_id"))
+wordnetwork <- head(cooc, 30)
+wordnetwork <- graph_from_data_frame(wordnetwork)
+ggraph(wordnetwork, layout = "fr") +
+  geom_edge_link(aes(width = cooc, edge_alpha = cooc), edge_colour = "pink") +
+  geom_node_text(aes(label = name), col = "darkgreen", size = 4) +
+  theme_graph(base_family = "Arial Narrow") +
+  theme(legend.position = "none") +
+  labs(title = "Cooccurrences within sentence for MULTI_FAMILY", subtitle = "Nouns & Adjective")  
+
+cooc <- cooccurrence(x = subset(x4, upos %in% c("NOUN", "ADJ")), 
+                     term = "lemma", 
+                     group = c("doc_id", "paragraph_id", "sentence_id"))
+wordnetwork <- head(cooc, 30)
+wordnetwork <- graph_from_data_frame(wordnetwork)
+ggraph(wordnetwork, layout = "fr") +
+  geom_edge_link(aes(width = cooc, edge_alpha = cooc), edge_colour = "pink") +
+  geom_node_text(aes(label = name), col = "darkgreen", size = 4) +
+  theme_graph(base_family = "Arial Narrow") +
+  theme(legend.position = "none") +
+  labs(title = "Cooccurrences within sentence for CONDO", subtitle = "Nouns & Adjective")  
+
+cooc <- cooccurrence(x = subset(x5, upos %in% c("NOUN", "ADJ")), 
+                     term = "lemma", 
+                     group = c("doc_id", "paragraph_id", "sentence_id"))
+wordnetwork <- head(cooc, 30)
+wordnetwork <- graph_from_data_frame(wordnetwork)
+ggraph(wordnetwork, layout = "fr") +
+  geom_edge_link(aes(width = cooc, edge_alpha = cooc), edge_colour = "pink") +
+  geom_node_text(aes(label = name), col = "darkgreen", size = 4) +
+  theme_graph(base_family = "Arial Narrow") +
+  theme(legend.position = "none") +
+  labs(title = "Cooccurrences within sentence for TOWNHOUSE", subtitle = "Nouns & Adjective")
+```  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
